@@ -518,8 +518,8 @@ class Hero(pygame.sprite.Sprite):
                 hp_sprites.remove(hp_sprites.sprites()[-1])
                 all_sprites.remove(auto_car)
                 cars_sprites.remove(auto_car)
-                boom_sound = pygame.mixer.Sound(os.path.join("interface", "game_sounds", "boom.mp3"))
-                boom_sound.play()
+                # boom_sound = pygame.mixer.Sound(os.path.join("interface", "game_sounds", "boom.mp3"))
+                # boom_sound.play()
                 random_appearence(cars_sprites)
                 if hp == 0:
                     running = False
@@ -551,13 +551,12 @@ class Hero(pygame.sprite.Sprite):
 
 class Car(pygame.sprite.Sprite):
     def __init__(self, position, *group):
+        super().__init__(*group)
         if mode == 'normal':
             self.image = load_image(os.path.join('cars', choice(cars_images)))
         else:
             self.image = load_image(os.path.join('cars_pixel', choice(cars_images_pixel)))
-        
-        super().__init__(*group)
-        self.image = load_image(os.path.join('cars', choice(cars_images)))
+
         self.U = randint(7, 12)
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
@@ -587,7 +586,6 @@ class Gruzovik(pygame.sprite.Sprite):
             self.image = load_image(os.path.join('cars_pixel', 'special', 'gruz.png'))
         self.image = load_image(os.path.join('cars', 'special', 'gruz.png'))
         self.U = randint(13, 20)
-        sound1 = pygame.mixer.Sound('interface/cars/sounds/gudok.ogg')
         sound1.play()
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
@@ -687,6 +685,8 @@ class Cursor(pygame.sprite.Sprite):
             image = load_image("cursor.png")
         else:
             image = load_image("cursor_pixel.png")
+
+        self.image = image
         
         if position is not None:
             self.rect.topleft = position
@@ -804,4 +804,4 @@ if __name__ == '__main__':
     game_over_flag = False
     cursor = Cursor(all_sprites)
     xcross = Xcross(all_sprites)
-    main()
+    main_menu()
