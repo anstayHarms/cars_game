@@ -19,10 +19,22 @@ y2 = -HEIGHT
 
 FPS = 120
 
-# Дефолтные настройки
 default_keys = ['W', 'S', 'A', 'D']
-custom_keys = default_keys
-mode = 'normal'
+con = sqlite3.connect(r"./config/data_base.db3")
+cur = con.cursor()
+cur.execute("""CREATE TABLE IF NOT EXISTS custom_setting(
+                    keys TEXT,
+                    mode TEXT);""")
+con.commit()
+if cur.execute("""SELECT COUNT(*) FROM custom_setting""").fetchone()[0] != 0:
+    custom_keys = cur.execute("""SELECT keys FROM custom_setting""").fetchone()[0].split()
+    mode = cur.execute("""SELECT mode FROM custom_setting""").fetchone()[0]
+else:
+    custom_keys = default_keys
+    mode = 'normal'
+    cur.execute("""INSERT INTO custom_setting(keys, mode)
+                                    VALUES(?, ?)""", (' '.join(custom_keys), mode))
+    con.commit()
 
 # Загружаем фоновую музыку и звуки
 died_sound = pygame.mixer.Sound(os.path.join("interface", "game_sounds", "died_sound.mp3"))
@@ -48,7 +60,7 @@ keys = {49: '1', 50: '2', 51: '3', 52: '4', 53: '5',
 with open('config/logs.txt', 'a', encoding='utf-8') as w:
     w.write('-----------Новая сессия------------\n')
 
-    
+
 # Загружает изображение
 
 
@@ -77,7 +89,7 @@ def main_menu():
     start_game = MenuElement(538, 350, 'main_menu/start_game.png', main_menu_sprites)
     settings = MenuElement(538, 450, 'main_menu/settings.png', main_menu_sprites)
     quit_game = MenuElement(538, 555, 'main_menu/quit.png', main_menu_sprites)
-    
+
     bg = load_image('main_menu/main_menu_bg.png')
     screen.blit(bg, (0, 0))
     while True:
@@ -119,8 +131,8 @@ class MenuElement(pygame.sprite.Sprite):
             pygame.draw.rect(screen, (160, 160, 160), self.rect, 0)
         else:
             pygame.draw.rect(screen, (126, 109, 97), self.rect, 0)
-            
-            
+
+
 # Настройки
 
 
@@ -268,6 +280,9 @@ class Settings:
                             mode = 'pixel'
                         else:
                             mode = 'normal'
+                        cur.execute("""UPDATE custom_setting
+                                SET mode=?;""", (mode,))
+                        con.commit()
 
             self.buttons.draw(screen)
             buttons.draw(screen)
@@ -317,24 +332,33 @@ class Settings:
                     if event.key in keys.keys() and \
                             keys[event.key] not in custom_keys:
                         custom_keys[0] = keys[event.key]
+                        cur.execute("""UPDATE custom_setting
+                                                        SET keys=?;""", (' '.join(custom_keys)))
+                        con.commit()
 
                 if 400 <= mouse_pos[0] <= 975 and 278 <= mouse_pos[1] <= 355 \
                         and event.type == pygame.KEYDOWN:
                     if event.key in keys.keys() and \
                             keys[event.key] not in custom_keys:
                         custom_keys[1] = keys[event.key]
+                        cur.execute("""UPDATE custom_setting SET keys=?;""", (' '.join(custom_keys)))
+                        con.commit()
 
                 if 400 <= mouse_pos[0] <= 975 and 360 <= mouse_pos[1] <= 436 \
                         and event.type == pygame.KEYDOWN:
                     if event.key in keys.keys() and \
                             keys[event.key] not in custom_keys:
                         custom_keys[2] = keys[event.key]
+                        cur.execute("""UPDATE custom_setting SET keys=?;""", (' '.join(custom_keys)))
+                        con.commit()
 
                 if 400 <= mouse_pos[0] <= 975 and 442 <= mouse_pos[1] <= 516 \
                         and event.type == pygame.KEYDOWN:
                     if event.key in keys.keys() and \
                             keys[event.key] not in custom_keys:
                         custom_keys[3] = keys[event.key]
+                        cur.execute("""UPDATE custom_setting SET keys=?;""", (' '.join(custom_keys)))
+                        con.commit()
 
             self.buttons.draw(screen)
             pygame.display.flip()
@@ -343,8 +367,8 @@ class Settings:
 
 def open_settings():
     Settings()
-        
-        
+
+
 # Экран конца игры
 
 
@@ -456,14 +480,14 @@ def terminate():
 
 
 class HitPoints(pygame.sprite.Sprite):
-     def __init__(self, position, *group):
+    def __init__(self, position, *group):
         super().__init__(*group)
         self.image = load_image('heart.png')
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.centerx = position[0]
         self.rect.centery = position[1]
-        
+
 
 # Работает как крестик - нажал на него - закрыл окно
 
@@ -591,7 +615,7 @@ class Gruzovik(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = position[0]
         self.rect.y = position[1]
-        
+
     def update(self):
         xu = 0
         if self.rect.x < 101:
@@ -620,12 +644,12 @@ class Coin(pygame.sprite.Sprite):
 
     def update(self):
         global kolvo_coins, hero
-        
+
         if mode == 'normal':
             self.image = load_image('coin.png')
         else:
             self.image = load_image('coin_pixel.png')
-        
+
         xu = 0
         if self.rect.x < 101:
             xu = 2
@@ -636,7 +660,7 @@ class Coin(pygame.sprite.Sprite):
             coins_sprites.remove(self)
             all_sprites.remove(self)
             kolvo_coins += 1
-            
+
 
 def load_coins():
     global kolvo_coins
@@ -664,7 +688,7 @@ class Scoreboard(pygame.sprite.Sprite):
                           'red')
         self.image.blit(text1, (1, 1))
         self.image.blit(text2, (40, 40))
-    
+
 
 # Кастомизированный курсор
 
@@ -687,10 +711,10 @@ class Cursor(pygame.sprite.Sprite):
             image = load_image("cursor_pixel.png")
 
         self.image = image
-        
+
         if position is not None:
             self.rect.topleft = position
-        
+
 
 # ?
 class EasterCar(pygame.sprite.Sprite):
@@ -712,8 +736,8 @@ class EasterCar(pygame.sprite.Sprite):
         elif self.rect.x > WIDTH - self.image.get_width() - 101:
             xu = -2
         self.rect = self.rect.move(xu, self.U)
-        
-        
+
+
 def get_key(value):
     global custom_keys
     for key, name in keys.items():
@@ -738,7 +762,7 @@ def main():
     DOWN, UP, LEFT, RIGHT = False, False, False, False
     for _ in range(3):
         random_appearence(cars_sprites)
-    
+
     # Ну а теперь обработка событий - на что нажал пользователь, куда и т.д.
     while running:
         for event in pygame.event.get():
@@ -777,7 +801,7 @@ def main():
                 random_appearence(cars_sprites)
                 if randint(1, 5) == 1:
                     random_appearence(cars_sprites, True)
-        
+
         update_background()
         all_sprites.update()
         all_sprites.draw(screen)
